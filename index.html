@@ -40,13 +40,15 @@
             const tagElement = document.getElementById('tag');
             const coordinatesElement = document.getElementById('coordinates');
 
-            // Получаем метку из URL
-            const urlParams = new URLSearchParams(window.location.search);
-            let userTag = 'Гость'; // Значение по умолчанию
+            // Проверяем localStorage на наличие сохраненной метки
+            let userTag = localStorage.getItem('userTag') || 'Гость';
 
+            // Получаем метку из URL, если она есть
+            const urlParams = new URLSearchParams(window.location.search);
             for (const [key] of urlParams.entries()) {
                 if (key === 'Annenkof') {
                     userTag = key; // Сохраняем метку
+                    localStorage.setItem('userTag', userTag); // Сохраняем метку в localStorage
                     break;
                 }
             }
