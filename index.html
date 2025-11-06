@@ -33,10 +33,10 @@
             // Отладка: Выводим все параметры
             console.log('Параметры из URL:', [...urlParams.entries()]);
 
-            // Ищем параметр, который начинается с "&" или просто "Annenkof"
+            // Ищем параметр "Annenkof" (без обязательного "&")
             let userTag = null;
-            for (const [key] of urlParams.entries()) {
-                if (key.startsWith('&') || key === 'Annenkof') {
+            for (const [key, value] of urlParams.entries()) {
+                if (key === 'Annenkof') {
                     userTag = key; // Сохраняем метку
                     break;
                 }
