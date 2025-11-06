@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отображение метки из локальной ссылки</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Добро пожаловать!</h1>
+    <div id="status">Ожидание загрузки данных...</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusDiv = document.getElementById('status');
+
+            // Получаем текущий URL
+            const url = window.location.href;
+
+            // Извлекаем метку из строки запроса
+            let userTag = null;
+
+            // Проверяем, есть ли "?" в URL
+            const queryStringStart = url.indexOf('?');
+            if (queryStringStart !== -1) {
+                const queryString = url.substring(queryStringStart + 1); // Отрезаем всё после "?"
+                
+                // Разбиваем параметры на части
+                const params = queryString.split('&');
+                for (const param of params) {
+                    if (param.startsWith('&')) {
+                        userTag = param; // Сохраняем метку
+                        break;
+                    }
+                }
+            }
+
+            // Если метка найдена, отображаем её
+            if (userTag) {
+                statusDiv.innerHTML = `Ваша метка: <strong>${userTag}</strong>`;
+            } else {
+                statusDiv.textContent = 'Метка не найдена в ссылке.';
+            }
+
+            // Опционально: можно добавить автоматическое получение координат
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const latitude = position.coords.latitude;
+                        const longitude = position.coords.longitude;
+
+                        // Отправляем метку и координаты на сервер (если нужно)
+                        /*
+                        fetch('https://yourserver.com/coordinates', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ tag: userTag, latitude, longitude })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Данные успешно отправлены!');
+                        })
+                        .catch(error => {
+                            console.error('Ошибка при отправке данных:', error);
+                        });
+                        */
+                    },
+                    function(error) {
+                        statusDiv.textContent = 'Не удалось получить координаты.';
+                        console.error(error);
+                    }
+                );
+            } else {
+                statusDiv.textContent = 'Ваш браузер не поддерживает функцию определения местоположения.';
+            }
+        });
+    </script>
+</body>
+</html>
