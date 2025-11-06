@@ -24,8 +24,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             const statusDiv = document.getElementById('status');
 
-            // Получаем полный URL
+            // Отладка: Выводим текущий URL
+            console.log('Текущий URL:', window.location.href);
+
+            // Получаем параметры из строки запроса
             const urlParams = new URLSearchParams(window.location.search);
+
+            // Отладка: Выводим все параметры
+            console.log('Параметры из URL:', [...urlParams.entries()]);
 
             // Ищем параметр, начинающийся с "&"
             let userTag = null;
@@ -35,6 +41,9 @@
                     break;
                 }
             }
+
+            // Отладка: Выводим найденную метку
+            console.log('Найденная метка:', userTag);
 
             // Если метка найдена, отображаем её
             if (userTag) {
