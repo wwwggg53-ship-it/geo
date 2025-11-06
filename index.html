@@ -3,53 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отображение метки из ссылки</title>
+    <title>Отслеживание метки и координат</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 50px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            font-size: 2rem;
+            color: #4CAF50;
+        }
+        #coordinates {
+            font-size: 1.2rem;
+            margin-top: 20px;
+            color: #555;
         }
         #status {
+            font-size: 1.5rem;
             margin-top: 20px;
-            font-size: 18px;
+            color: #007BFF;
+        }
+        footer {
+            margin-top: 50px;
+            font-size: 0.9rem;
+            color: #777;
         }
     </style>
 </head>
 <body>
-    <h1>Добро пожаловать!</h1>
-    <div id="status">Ожидание загрузки данных...</div>
+    <h1>Добро пожаловать, <span id="tag">Метка</span></h1>
+    <div id="coordinates">Ожидание координат...</div>
+    <footer>
+        Переместитесь, чтобы обновить координаты.
+    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const statusDiv = document.getElementById('status');
+            const tagElement = document.getElementById('tag');
+            const coordinatesElement = document.getElementById('coordinates');
 
-            // Отладка: Выводим текущий URL
-            console.log('Текущий URL:', window.location.href);
-
-            // Получаем параметры из строки запроса
+            // Получаем метку из URL
             const urlParams = new URLSearchParams(window.location.search);
+            let userTag = 'Гость'; // Значение по умолчанию
 
-            // Отладка: Выводим все параметры
-            console.log('Параметры из URL:', [...urlParams.entries()]);
-
-            // Ищем параметр "Annenkof" (без обязательного "&")
-            let userTag = null;
-            for (const [key, value] of urlParams.entries()) {
+            for (const [key] of urlParams.entries()) {
                 if (key === 'Annenkof') {
                     userTag = key; // Сохраняем метку
                     break;
                 }
             }
 
-            // Отладка: Выводим найденную метку
-            console.log('Найденная метка:', userTag);
+            // Отображаем метку
+            tagElement.textContent = userTag;
 
-            // Если метка найдена, отображаем её
-            if (userTag) {
-                statusDiv.innerHTML = `Ваша метка: <strong>${userTag}</strong>`;
+            // Функция для обновления координат
+            function updateCoordinates(position) {
+                const latitude = position.coords.latitude.toFixed(6);
+                const longitude = position.coords.longitude.toFixed(6);
+                coordinatesElement.innerHTML = `Ваши координаты: <strong>${latitude}, ${longitude}</strong>`;
+            }
+
+            // Функция для обработки ошибок геолокации
+            function handleError(error) {
+                coordinatesElement.textContent = 'Не удалось получить координаты.';
+                console.error('Ошибка геолокации:', error.message);
+            }
+
+            // Начинаем отслеживать координаты
+            if (navigator.geolocation) {
+                const watchId = navigator.geolocation.watchPosition(updateCoordinates, handleError, {
+                    enableHighAccuracy: true, // Включаем высокую точность
+                    timeout: 5000,           // Таймаут для получения координат
+                    maximumAge: 0            // Не используем кэшированные данные
+                });
             } else {
-                statusDiv.textContent = 'Метка не найдена в ссылке.';
+                coordinatesElement.textContent = 'Ваш браузер не поддерживает функцию определения местоположения.';
             }
         });
     </script>
