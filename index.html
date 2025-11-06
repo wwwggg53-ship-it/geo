@@ -25,23 +25,14 @@
             const statusDiv = document.getElementById('status');
 
             // Получаем полный URL
-            const url = window.location.href;
+            const urlParams = new URLSearchParams(window.location.search);
 
-            // Извлекаем метку из строки запроса
+            // Ищем параметр, начинающийся с "&"
             let userTag = null;
-
-            // Проверяем, есть ли "?" в URL
-            const queryStringStart = url.indexOf('?');
-            if (queryStringStart !== -1) {
-                const queryString = url.substring(queryStringStart + 1); // Отрезаем всё после "?"
-                
-                // Разбиваем параметры на части
-                const params = queryString.split('&');
-                for (const param of params) {
-                    if (param.startsWith('&')) {
-                        userTag = param; // Сохраняем метку
-                        break;
-                    }
+            for (const [key] of urlParams.entries()) {
+                if (key.startsWith('&')) {
+                    userTag = key; // Сохраняем метку
+                    break;
                 }
             }
 
