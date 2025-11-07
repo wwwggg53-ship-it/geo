@@ -3,134 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отслеживание метки и координат</title>
+    <title>Ближайшая точка</title>
     <style>
-        /* Общие стили */
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             text-align: center;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #6dd5ed, #2193b0);
-            color: #fff;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            margin-top: 50px;
+            background-color: #f4f4f9;
+            color: #333;
         }
-
         h1 {
             font-size: 2rem;
-            margin-bottom: 20px;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            color: #4CAF50;
         }
-
-        #coordinates {
-            font-size: 1.2rem;
+        #nearest-point {
+            font-size: 1.5rem;
             margin-top: 20px;
-            color: #e0f7fa;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+            color: #007BFF;
         }
-
         footer {
-            margin-top: 30px;
+            margin-top: 50px;
             font-size: 0.9rem;
-            color: #bbdefb;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Кнопка очистки данных */
-        .clear-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 1rem;
-            color: #fff;
-            background-color: #ff5722;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-        }
-
-        .clear-btn:hover {
-            background-color: #e64a19;
-        }
-
-        /* Адаптация для мобильных устройств */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            #coordinates {
-                font-size: 1rem;
-            }
-
-            footer {
-                font-size: 0.8rem;
-            }
-
-            .clear-btn {
-                padding: 8px 16px;
-                font-size: 0.9rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            #coordinates {
-                font-size: 0.9rem;
-            }
-
-            footer {
-                font-size: 0.7rem;
-            }
-
-            .clear-btn {
-                padding: 6px 12px;
-                font-size: 0.8rem;
-            }
+            color: #777;
         }
     </style>
 </head>
 <body>
-    <h1>Добро пожаловать, <span id="tag">Гость</span></h1>
+    <h1>Добро пожаловать!</h1>
     <div id="coordinates">Ожидание координат...</div>
+    <div id="nearest-point">Поиск ближайшей точки...</div>
     <footer>
         Переместитесь, чтобы обновить координаты.
     </footer>
-    <button class="clear-btn" onclick="clearData()">Очистить данные</button>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const tagElement = document.getElementById('tag');
             const coordinatesElement = document.getElementById('coordinates');
+            const nearestPointElement = document.getElementById('nearest-point');
 
-            // Проверяем localStorage на наличие сохраненной метки
-            let userTag = localStorage.getItem('userTag') || 'Гость';
+            // Данные из таблицы Google Sheets (вручную скопированы)
+            const points = [
+                { name: "🏗 Волокно", coeff: 13, coords: [51.669036, 36.081342] },
+                { name: "🏝 Парковая", coeff: 11, coords: [51.669848, 36.142218] },
+                { name: "⚠️ Энгельса", coeff: 12, coords: [51.699032, 36.157341] },
+                { name: "🛠️ КЗТЗ", coeff: 13, coords: [51.708878, 36.146305] },
+                { name: "🏢 Клыкова", coeff: 12, coords: [51.721887, 36.134499] },
+                { name: "👨‍🎓 Студенческая", coeff: 13, coords: [51.741065, 36.145612] },
+                { name: "🏟️ Манеж", coeff: 12, coords: [51.726253, 36.174996] },
+                { name: "🍔 Центр", coeff: 9, coords: [51.726875, 36.185927] },
+                { name: "🍔 Ленина", coeff: 9, coords: [51.734405, 36.192233] },
+                { name: "🕌 ЦП", coeff: 13, coords: [51.749037, 36.191202] },
+                { name: "⛺ МегаГринн", coeff: 12, coords: [51.762106, 36.183389] },
+                { name: "🎉 Победа", coeff: 10, coords: [51.777857, 36.174806] },
+                { name: "🏢 Дирик", coeff: 13, coords: [51.811114, 36.165550] },
+                { name: "🐀 Мурка", coeff: 13, coords: [51.757586, 36.225593] }
+            ];
 
-            // Получаем метку из URL, если она есть
-            const urlParams = new URLSearchParams(window.location.search);
-            for (const [key] of urlParams.entries()) {
-                if (key === 'Annenkof') {
-                    userTag = key; // Сохраняем метку
-                    localStorage.setItem('userTag', userTag); // Сохраняем метку в localStorage
-                    break;
-                }
+            // Функция для расчета расстояния по формуле Хаверсина
+            function calculateDistance(lat1, lon1, lat2, lon2) {
+                const toRad = (value) => (value * Math.PI) / 180;
+                const R = 6371; // Радиус Земли в км
+
+                const dLat = toRad(lat2 - lat1);
+                const dLon = toRad(lon2 - lon1);
+
+                const a =
+                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                return R * c; // Расстояние в км
             }
 
-            // Отображаем метку
-            tagElement.textContent = userTag;
+            // Функция для поиска ближайшей точки
+            function findNearestPoint(userLat, userLon) {
+                let nearestPoint = null;
+                let minDistance = Infinity;
 
-            // Удаляем метку из URL
-            if (urlParams.has('Annenkof')) {
-                history.replaceState(null, '', window.location.pathname); // Очищаем URL
+                for (const point of points) {
+                    const distance = calculateDistance(userLat, userLon, point.coords[0], point.coords[1]);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestPoint = point;
+                    }
+                }
+
+                return nearestPoint;
             }
 
             // Функция для обновления координат
@@ -138,31 +97,35 @@
                 const latitude = position.coords.latitude.toFixed(6);
                 const longitude = position.coords.longitude.toFixed(6);
                 coordinatesElement.innerHTML = `Ваши координаты: <strong>${latitude}, ${longitude}</strong>`;
+
+                // Поиск ближайшей точки
+                const nearestPoint = findNearestPoint(latitude, longitude);
+                if (nearestPoint) {
+                    nearestPointElement.innerHTML = `Ближайшая точка: <strong>${nearestPoint.name}</strong> (+${nearestPoint.coeff})`;
+                } else {
+                    nearestPointElement.textContent = 'Не удалось найти ближайшую точку.';
+                }
             }
 
             // Функция для обработки ошибок геолокации
             function handleError(error) {
                 coordinatesElement.textContent = 'Не удалось получить координаты.';
+                nearestPointElement.textContent = 'Поиск ближайшей точки невозможен.';
                 console.error('Ошибка геолокации:', error.message);
             }
 
             // Начинаем отслеживать координаты
             if (navigator.geolocation) {
-                const watchId = navigator.geolocation.watchPosition(updateCoordinates, handleError, {
-                    enableHighAccuracy: true, // Включаем высокую точность
-                    timeout: 5000,           // Таймаут для получения координат
-                    maximumAge: 0            // Не используем кэшированные данные
+                navigator.geolocation.watchPosition(updateCoordinates, handleError, {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
                 });
             } else {
                 coordinatesElement.textContent = 'Ваш браузер не поддерживает функцию определения местоположения.';
+                nearestPointElement.textContent = 'Поиск ближайшей точки невозможен.';
             }
         });
-
-        // Функция для очистки данных
-        function clearData() {
-            localStorage.removeItem('userTag');
-            location.reload(); // Перезагружаем страницу
-        }
     </script>
 </body>
 </html>
